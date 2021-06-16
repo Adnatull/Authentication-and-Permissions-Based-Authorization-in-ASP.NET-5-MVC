@@ -20,6 +20,7 @@ namespace Identity.Controllers
 
         public IActionResult Index()
         {
+            ViewData["Message"] = TempData["Message"];
             return View();
         }
 
