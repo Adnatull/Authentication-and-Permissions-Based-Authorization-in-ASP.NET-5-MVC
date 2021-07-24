@@ -1,5 +1,7 @@
+using Identity.Authorization;
 using Identity.Data;
 using Identity.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -36,6 +38,9 @@ namespace Identity
                 ).AddEntityFrameworkStores<IdentityContext>()
                 .AddDefaultTokenProviders();
             services.AddControllersWithViews();
+
+            services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+            services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
