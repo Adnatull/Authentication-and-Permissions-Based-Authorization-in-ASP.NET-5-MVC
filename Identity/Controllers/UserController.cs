@@ -1,4 +1,5 @@
-﻿using Identity.Helpers;
+﻿using System.Collections.Generic;
+using Identity.Helpers;
 using Identity.Models;
 using Identity.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -6,7 +7,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Identity.Permissions;
 
 namespace Identity.Controllers
 {
@@ -40,7 +43,7 @@ namespace Identity.Controllers
         public async Task<IActionResult> ManageRoles(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return View();
+            if (user == null) return RedirectToAction("Index");
             var userRoles = await _userManager.GetRolesAsync(user);
             var allRoles = await _roleManager.Roles.ToListAsync();
             var allRolesViewModel = allRoles.Select(role => new ManageRoleViewModel
@@ -83,9 +86,79 @@ namespace Identity.Controllers
                         break;
                 }
             }
-
             return RedirectToAction("Index", "User", new {  id = manageUserRolesViewModel.UserId, succeeded = true, message = "Succeeded" });
+        }
+
+        
+        [HttpGet]
+        [Authorize(Policy = Permissions.Permissions.Users.ManageClaims)]
+        public async Task<IActionResult> ManagePermissions(string userId, string permissionValue, int? pageNumber, int? pageSize)
+        {
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return RedirectToAction("Index");
+            var userPermissions = await _userManager.GetClaimsAsync(user);
+            var allPermissions = PermissionHelper.GetAllPermissions();
+            if (!string.IsNullOrWhiteSpace(permissionValue))
+            {
+                allPermissions = allPermissions.Where(x => x.Value.ToLower().Contains(permissionValue.Trim().ToLower()))
+                    .ToList();
+            }
+            var managePermissionsClaim = new List<ManageUserClaimViewModel>();
+            foreach (var permission in allPermissions)
+            {
+                var managePermissionClaim = new ManageUserClaimViewModel { Type = permission.Type, Value = permission.Value };
+                if (userPermissions.Any(x => x.Value == permission.Value))
+                {
+                    managePermissionClaim.Checked = true;
+                }
+                managePermissionsClaim.Add(managePermissionClaim);
+            }
+
+            var paginatedList = PaginatedList<ManageUserClaimViewModel>.CreateFromLinqQueryable(managePermissionsClaim.AsQueryable(),
+                pageNumber ?? 1, pageSize ?? 12);
+            var manageUserPermissionsViewModel = new ManageUserPermissionsViewModel
+            {
+                UserId = userId,
+                UserName = user.UserName,
+                PermissionValue = permissionValue,
+                ManagePermissionsViewModel = paginatedList
+            };
             
+            return View(manageUserPermissionsViewModel);
+        }
+
+
+       
+        [HttpPost]
+        [Authorize(Policy = Permissions.Permissions.Users.ManageClaims)]
+        public async Task<IActionResult> ManageClaims(ManageUserClaimViewModel manageUserClaimViewModel)
+        {
+
+            var userById = await _userManager.FindByIdAsync(manageUserClaimViewModel.UserId);
+            var userByName = await _userManager.FindByNameAsync(manageUserClaimViewModel.UserName);
+
+            if (userById != userByName)
+                return Json(new { Succeeded = false, Message = "Fail" });
+
+            var allClaims = await _userManager.GetClaimsAsync(userById);
+            var claimExists =
+                allClaims.Where(x => x.Type == manageUserClaimViewModel.Type && x.Value == manageUserClaimViewModel.Value).ToList();
+            switch (manageUserClaimViewModel.Checked)
+            {
+                case true when claimExists.Count == 0:
+                {
+                    await _userManager.AddClaimAsync(userById,
+                        new Claim(manageUserClaimViewModel.Type, manageUserClaimViewModel.Value));
+                    break;
+                }
+                case false when claimExists.Count > 0:
+                {
+                    await _userManager.RemoveClaimsAsync(userById, claimExists);
+                    break;
+                }
+            }
+            return Json(new {Succeeded = true, Message="Success"});
         }
     }
 }
