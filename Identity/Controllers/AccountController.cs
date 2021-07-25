@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Identity.Controllers
 {
+    
     public class AccountController : Controller
     {
         private readonly UserManager<AppUser> _userManager;
@@ -19,12 +20,14 @@ namespace Identity.Controllers
             _signInManager = signInManager;
         }
         [HttpGet]
+        [AllowAnonymous]
         public IActionResult Register()
         {
             return View(new RegisterUserViewModel());
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<IActionResult> Register(RegisterUserViewModel model)
         {
             if (!ModelState.IsValid)
@@ -49,12 +52,14 @@ namespace Identity.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public IActionResult Login()
         {
             return View(new LoginUserViewModel());
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<IActionResult> Login(LoginUserViewModel model)
         {
             if (!ModelState.IsValid)
