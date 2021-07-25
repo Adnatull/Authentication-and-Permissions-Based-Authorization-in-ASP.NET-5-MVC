@@ -3,4 +3,4 @@
 ## Default User Credentials
 UserName: SuperAdmin\
 Email: a2masum@yahoo.com\
-Password: SuperAdmin\
+Password: SuperAdmin
