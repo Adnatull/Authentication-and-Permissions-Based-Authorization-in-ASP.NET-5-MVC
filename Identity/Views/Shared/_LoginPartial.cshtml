@@ -11,6 +11,11 @@
                     @UserManager.GetUserName(User)
                 </button>
                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    @if (User.IsInRole("SuperAdmin"))
+                    {
+                        <a class="dropdown-item" asp-controller="User" asp-action="Index">Users</a>
+                        <a class="dropdown-item" asp-controller="Role" asp-action="Index">Roles</a>
+                    }                    
                     <a class="dropdown-item" onclick="event.preventDefault();document.getElementById('logoutForm').submit();" style="cursor: pointer;">Logout</a>
                     <form id="logoutForm" class="form-inline" asp-controller="Account" asp-action="Logout" method="POST">
                     </form>

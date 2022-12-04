@@ -30,7 +30,7 @@ namespace Identity.Controllers
         [Authorize(Policy = Permissions.Permissions.Roles.View)]
         public async Task<IActionResult> Index(int? pageNumber, int? pageSize)
         {
-            var roles = _roleManager.Roles;
+            var roles = _roleManager.Roles.OrderBy(x => x.Name);
            
             var rs = await PaginatedList<AppRole>.CreateFromEfQueryableAsync(roles.AsNoTracking(),
                 pageNumber ?? 1, pageSize ?? 12);

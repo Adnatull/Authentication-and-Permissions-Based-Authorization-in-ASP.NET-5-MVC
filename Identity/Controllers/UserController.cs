@@ -45,7 +45,7 @@ namespace Identity.Controllers
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null) return RedirectToAction("Index");
             var userRoles = await _userManager.GetRolesAsync(user);
-            var allRoles = await _roleManager.Roles.ToListAsync();
+            var allRoles = await _roleManager.Roles.OrderBy(x => x.Name).ToListAsync();
             var allRolesViewModel = allRoles.Select(role => new ManageRoleViewModel
                 {Name = role.Name, Description = role.Description}).ToList();
             foreach (var roleViewModel in allRolesViewModel.Where(roleViewModel =>
